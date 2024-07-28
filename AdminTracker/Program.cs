@@ -119,22 +119,14 @@ namespace AdminTracker
                 {
                     var _admin = _admins[adminIndex];
 
-                    if (player.playtime <= 0)
-                        lastAdminThing = -1231;
+                    Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}", ConsoleColor.DarkYellow);
 
-                    if(lastAdminThing != player.playtime)
+                    // Initialize a new instance of the SpeechSynthesizer.
+                    using (SpeechSynthesizer synth = new SpeechSynthesizer())
                     {
-                        Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}", ConsoleColor.DarkYellow);
+                        synth.SetOutputToDefaultAudioDevice();
 
-                        lastAdminThing = player.playtime;
-
-                        // Initialize a new instance of the SpeechSynthesizer.
-                        using (SpeechSynthesizer synth = new SpeechSynthesizer())
-                        {
-                            synth.SetOutputToDefaultAudioDevice();
-
-                            synth.Speak($"Admin found: {_admin.staticName}");
-                        }
+                        synth.Speak($"Admin found: {_admin.staticName}");
                     }
                 }
             }
