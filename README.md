@@ -18,11 +18,15 @@
 ## gamePath example:
 - "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust"
 
+## How it works
+- Using Steam Overlay data to determine if an Facepunch employee is networked to you
+- If server population is < 100, admins are globally networked
+- If server pop is higher than 100, you will only see admins that is spectating you or a player in your render
+
 ## Works best for
-- Servers with below 100 population
-- Public steam profile, private profiles dont update the player list accurately
-- Also works for higher pop servers but based on your Network/Render
-- Admin notifications might be delayed on Higher population servers but at least you will know it was a manual ban
+- When your own steam profile is set to Public, meaning game details Public, steam friend list can be hidden
+- Servers with population below 100
+- When server have more than 100 players, admin message might be delayed up to 5 minutes, still gives you a indication if you got manually banned
 
 ## My discord
 `theminkman__`
