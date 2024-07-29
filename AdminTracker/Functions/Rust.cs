@@ -21,21 +21,26 @@ namespace AdminTracker
             var coplayFile = Path.Combine(cfg.steamPath, "config", $"coplay_{Program.playerID}.vdf");
 
             if (!File.Exists(coplayFile))
+            {
+                Custom.WriteLine($"coplayFile not found coplay_{Program.playerID}.vdf", ConsoleColor.Red);
                 return null;
+            }
 
             DateTimeOffset LastWriteTime = File.GetLastWriteTimeUtc(coplayFile);
 
             // First program launch
-            if(Program.lastWriteTime == DateTimeOffset.MinValue)
+            if(Program.lastWriteTime == 0)
             {
+                Program.lastWriteTime = LastWriteTime.ToUnixTimeSeconds();
                 return DumpVDF(coplayFile);
             }
             // Changes detected
-            else if(Program.lastWriteTime != LastWriteTime)
+            else if(Program.lastWriteTime != LastWriteTime.ToUnixTimeSeconds())
             {
+                Program.lastWriteTime = LastWriteTime.ToUnixTimeSeconds();
                 return DumpVDF(coplayFile);
             }
-            return oldPlayerList;
+            return null;
         }
 
         public static List<Decrypt> DumpVDF(string coplayFile)
@@ -47,39 +52,6 @@ namespace AdminTracker
             oldPlayerList = _coplay;
 
             return _coplay;
-
-            //if (steamIds.EndsWith(","))
-            //    steamIds = steamIds.Remove(steamIds.Length - 1).Trim();
-            //
-            //if (steamIds.Length <= 17)
-            //    return null;
-            //
-            //var playerSummaries = Steam.GetPlayerSummaries(steamIds);
-            //
-            //if (playerSummaries == "error")
-            //{
-            //    Custom.WriteLine("Error parsing summaries", ConsoleColor.Red);
-            //    return null;
-            //}
-            //
-            //JObject o = JObject.Parse(playerSummaries);
-            //
-            //var _summaries = new List<Steam>();
-            //try
-            //{
-            //    _summaries = JsonConvert.DeserializeObject<List<Steam>>(o.SelectToken("response").SelectToken("players").ToString());
-            //}
-            //catch (Exception ex)
-            //{
-            //    Custom.WriteLine("Error parsing summaries", ConsoleColor.Red);
-            //    Custom.WriteLine($"{ex.ToString()}", ConsoleColor.Red);
-            //    return null;
-            //}
-            //
-            //DateTimeOffset LastWriteTime = File.GetLastWriteTimeUtc(coplayFile);
-            //Program.lastWriteTime = LastWriteTime;
-            //
-            //oldPlayerList = _summaries.ToList();
         }
 
         public static void ReadLogFile()
@@ -89,7 +61,10 @@ namespace AdminTracker
             var outputLog = Path.Combine(cfg.gamePath, "output_log.txt");
 
             if (!File.Exists(outputLog))
+            {
+                Custom.WriteLine($"outputLog not found {outputLog}", ConsoleColor.Red);
                 return;
+            }
 
             try
             {
@@ -117,6 +92,7 @@ namespace AdminTracker
                                 Console.Title = $"AdminTracker | {name} ({steamid})";
 
                                 Custom.WriteLine($"Current account: {steamid} {name}", ConsoleColor.Magenta);
+                                break;
                             }
                             break;
                         }

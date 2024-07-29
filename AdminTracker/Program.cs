@@ -26,7 +26,7 @@ namespace AdminTracker
         public static string playerID = "";
         public static string playerName = "";
 
-        public static DateTimeOffset lastWriteTime = new DateTimeOffset();
+        public static long lastWriteTime = 0;
 
         public static long lastAdminThing = -1231;
 
@@ -102,20 +102,25 @@ namespace AdminTracker
                     continue;
                 }
 
-                var playerList = Rust.PlayerList();
-
-                if(playerList != null)
-                    AdminCheck(playerList);
+                AdminCheck(Rust.PlayerList());
             }
         }
 
         private static void AdminCheck(List<Decrypt> players)
         {
+            if (players == null)
+                return;
+
+            if (players.Count <= 0)
+                return;
+
+            Custom.WriteLine($"PlayerList count {players.Count}", ConsoleColor.DarkMagenta);
+
             foreach(var player in players)
             {
                 var adminIndex = _admins.FindIndex(m => m.steamID == player.steamid);
 
-                if(adminIndex > -1)
+                if (adminIndex > -1)
                 {
                     var _admin = _admins[adminIndex];
 
