@@ -1,7 +1,9 @@
-﻿using System;
+﻿using AdminTracker.Classes;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
@@ -15,6 +17,7 @@ namespace AdminTracker
 
         public static Root adminRoot = new Root();
         public static List<Administrators> _admins = new List<Administrators>();
+        public static List<AdminCache> _adminCache = new List<AdminCache>();
 
         public static Config _config = new Config();
 
@@ -29,6 +32,10 @@ namespace AdminTracker
         public static long lastWriteTime = 0;
 
         public static long lastAdminThing = -1231;
+
+        public static bool triggerSoundSettings = false;
+
+
 
         private static void ConsolePoolThread()
         {
@@ -55,6 +62,17 @@ namespace AdminTracker
         static void Main(string[] args)
         {
             Console.Title = "AdminTracker | Bomb Facepunch";
+
+            if(!triggerSoundSettings)
+            {
+                using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                {
+                    synth.SetOutputToDefaultAudioDevice();
+                    synth.Speak($"Admintracker starting");
+
+                    triggerSoundSettings = false;
+                }
+            }
 
             new Thread(ConsolePoolThread).Start();
 
@@ -124,14 +142,57 @@ namespace AdminTracker
                 {
                     var _admin = _admins[adminIndex];
 
-                    Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}", ConsoleColor.DarkYellow);
+                    //var antiSpamIndex = _spam.FindIndex(m => m.id == player.steamid);
 
-                    // Initialize a new instance of the SpeechSynthesizer.
-                    using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                    if(player.playtime > 0 && _config.useAdminCache)
                     {
-                        synth.SetOutputToDefaultAudioDevice();
+                        var adminCacheIndex = _adminCache.FindIndex(m => m.steamID == _admin.steamID);
 
-                        synth.Speak($"Admin found: {_admin.staticName}");
+                        if(adminCacheIndex > -1)
+                        {
+                            var _adminFromCache = _adminCache[adminCacheIndex];
+
+                            var lastSeen = _adminFromCache.lastSeen;
+
+                            if(lastSeen != player.playtime)
+                            {
+                                using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                                {
+                                    synth.SetOutputToDefaultAudioDevice();
+
+                                    Custom.WriteLine($"Admin re-connected: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
+                                    synth.Speak($"Admin re-connected: {_admin.staticName}");
+                                }
+
+                                _adminFromCache.lastSeen = player.playtime;
+                            }
+                        }
+                        else
+                        {
+                            _adminCache.Add(new AdminCache() { steamID = player.steamid, lastSeen = player.playtime });
+
+                            Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
+
+                            // Initialize a new instance of the SpeechSynthesizer.
+                            using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                            {
+                                synth.SetOutputToDefaultAudioDevice();
+
+                                synth.Speak($"Admin found: {_admin.staticName}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
+
+                        // Initialize a new instance of the SpeechSynthesizer.
+                        using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                        {
+                            synth.SetOutputToDefaultAudioDevice();
+
+                            synth.Speak($"Admin found: {_admin.staticName}");
+                        }
                     }
                 }
             }

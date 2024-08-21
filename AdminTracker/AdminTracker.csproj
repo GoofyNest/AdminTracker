@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\AdminCache.cs" />
     <Compile Include="Classes\Administrators.cs" />
     <Compile Include="Classes\Config.cs" />
     <Compile Include="Classes\Overlay.cs" />

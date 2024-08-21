@@ -12,6 +12,8 @@ namespace AdminTracker
         public string configPath { get; set; }
         public string adminPath { get; set; }
 
+        public bool useAdminCache { get; set; } = true;
+
         public static void Initialize(Config cfg)
         {
             Custom.WriteLine($"Starting configuration initization", ConsoleColor.DarkMagenta);

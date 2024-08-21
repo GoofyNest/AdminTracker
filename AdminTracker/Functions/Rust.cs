@@ -1,12 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AdminTracker
 {
@@ -81,10 +75,15 @@ namespace AdminTracker
                             if (parts.Length > 1)
                             {
                                 var relevantPart = parts[1].Trim();
-                                Custom.WriteLine(relevantPart);
+                                Custom.WriteLine("debug " + relevantPart);
 
                                 var steamid = relevantPart.Split(' ')[0].Trim();
+
+                                Custom.WriteLine(steamid);
+
                                 var name = relevantPart.Split('(')[1].Trim().Replace(")", "");
+
+                                Custom.WriteLine(name);
 
                                 Program.playerID = steamid;
                                 Program.playerName = name;
@@ -101,6 +100,7 @@ namespace AdminTracker
             }
             catch (Exception ex)
             {
+
                 Custom.WriteLine("An error occurred while reading the file:", ConsoleColor.Red);
                 Custom.WriteLine(ex.Message, ConsoleColor.Red);
             }
