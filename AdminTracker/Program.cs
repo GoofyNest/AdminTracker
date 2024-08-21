@@ -31,11 +31,6 @@ namespace AdminTracker
 
         public static long lastWriteTime = 0;
 
-        public static long lastAdminThing = -1231;
-
-        public static bool triggerSoundSettings = false;
-
-
 
         private static void ConsolePoolThread()
         {
@@ -63,15 +58,21 @@ namespace AdminTracker
         {
             Console.Title = "AdminTracker | Bomb Facepunch";
 
-            if(!triggerSoundSettings)
+            try
             {
                 using (SpeechSynthesizer synth = new SpeechSynthesizer())
                 {
                     synth.SetOutputToDefaultAudioDevice();
                     synth.Speak($"Admintracker starting");
-
-                    triggerSoundSettings = false;
                 }
+            } 
+            catch (Exception ex)
+            {
+                Custom.WriteLine($"WARNING!!!!!!!", ConsoleColor.Red);
+                Custom.WriteLine($"SpeechSynthesizer is not working for you", ConsoleColor.Red);
+                Custom.WriteLine($"You will not hear TTS when admin joins your server", ConsoleColor.Red);
+                Custom.WriteLine($"{ex.ToString()}", ConsoleColor.Red);
+
             }
 
             new Thread(ConsolePoolThread).Start();
