@@ -41,7 +41,7 @@ namespace AdminTracker
         {
             var steamIds = Decrypt.GenerateClass(coplayFile);
 
-            var _coplay = Decrypt._coplay;
+            var _coplay = Decrypt.Coplay;
 
             oldPlayerList = _coplay;
 

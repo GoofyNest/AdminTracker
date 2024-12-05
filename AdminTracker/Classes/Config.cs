@@ -14,6 +14,10 @@ namespace AdminTracker
 
         public bool useAdminCache { get; set; } = true;
 
+        public bool profileCrawler { get; set; } = false;
+
+        public int cheaterHours { get; set; } = 1000;
+
         public static void Initialize(Config cfg)
         {
             Custom.WriteLine($"Starting configuration initization", ConsoleColor.DarkMagenta);
@@ -38,6 +42,8 @@ namespace AdminTracker
                 cfg = JsonConvert.DeserializeObject<Config>(File.ReadAllText(cfg.configPath));
 
                 Custom.WriteLine($"Loaded {cfg.configPath}", ConsoleColor.Cyan);
+
+                File.WriteAllText(cfg.configPath, JsonConvert.SerializeObject(cfg, Formatting.Indented));
             }
 
             if(!Directory.Exists(cfg.steamPath))

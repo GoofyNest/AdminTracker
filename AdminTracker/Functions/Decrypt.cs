@@ -2,221 +2,134 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace AdminTracker
 {
     public class Decrypt
     {
-        public static List<Decrypt> _coplay = new List<Decrypt>();
+        public static List<Decrypt> Coplay { get; set; } = new List<Decrypt>();
 
-        public string steamid { get; set; }
-        public long gameid { get; set; }
-        public long playtime { get; set; }
-        public int currentgame { get; set; } = 0;
+        public string SteamId { get; set; } = string.Empty;
+        public long GameId { get; set; }
+        public long Playtime { get; set; }
+        public int CurrentGame { get; set; }
 
-        public static string GenerateClass(string path, string steamid = "", string accuracy = "3")
+        public override string ToString() =>
+            $"SteamId: {SteamId}, GameId: {GameId}, Playtime: {Playtime}, CurrentGame: {CurrentGame}";
+
+        public static string GenerateClass(string path, string targetSteamId = "", string accuracy = "3")
         {
-            _coplay = new List<Decrypt>();
-
-            var steamids = "";
-
             if (!File.Exists(path))
                 return string.Empty;
 
-            var hex = ReadFileAsHex(path);
+            string hexContent = ReadFileAsHex(path);
 
-            var index = 0;
+            // Populate Coplay list
+            Coplay = ExtractSteamIds(hexContent, targetSteamId, accuracy);
+            AssignPlaytimes(hexContent, targetSteamId, accuracy);
+            AssignGameIds(hexContent);
 
-            foreach (var steamId in Decrypt.GetUlongs(hex, "SteamID"))
+            return string.Join(",", Coplay.Select(c => c.SteamId));
+        }
+
+        private static List<Decrypt> ExtractSteamIds(string hex, string targetSteamId, string accuracy)
+        {
+            var ids = GetUlongs(hex, "SteamID");
+            var uniqueIds = new HashSet<ulong>(ids);
+
+            return uniqueIds.Select(id => new Decrypt
             {
-                var alreadyExist = _coplay.FindIndex(m => m.steamid == steamId.ToString());
+                SteamId = id.ToString(),
+                CurrentGame = (!string.IsNullOrEmpty(targetSteamId) && accuracy != "3" && id.ToString() == targetSteamId) ? 1 : 0
+            }).ToList();
+        }
 
-                if (alreadyExist > -1)
-                    continue;
-
-                if (string.IsNullOrEmpty(steamid) == false && accuracy != "3")
+        private static void AssignPlaytimes(string hex, string targetSteamId, string accuracy)
+        {
+            var playtimes = GetUints(hex, "Playtime");
+            for (int i = 0; i < playtimes.Count && i < Coplay.Count; i++)
+            {
+                var coplayEntry = Coplay[i];
+                coplayEntry.Playtime = playtimes[i];
+                if (!string.IsNullOrEmpty(targetSteamId) && accuracy != "3" && coplayEntry.SteamId == targetSteamId)
                 {
-                    if (steamId.ToString() == steamid)
-                        _coplay.Add(new Decrypt() { steamid = steamId.ToString(), currentgame = 1 });
-                    else
-                        _coplay.Add(new Decrypt() { steamid = steamId.ToString(), currentgame = 0 });
+                    coplayEntry.CurrentGame = 1;
                 }
-                else
-                    _coplay.Add(new Decrypt() { steamid = steamId.ToString() });
-
-                steamids += steamId + ",";
             }
+        }
 
-            var count = _coplay.Count;
-            var _temp = _coplay.FindLast(m => m.steamid == steamid);
-
-            foreach (var playtime in Decrypt.GetUints(hex, "Playtime"))
+        private static void AssignGameIds(string hex)
+        {
+            var gameIds = GetUints(hex, "gameid");
+            for (int i = 0; i < gameIds.Count && i < Coplay.Count; i++)
             {
-                if (index > count)
-                    break;
-
-                if (string.IsNullOrEmpty(steamid) == false && _temp != null && accuracy != "3")
-                {
-                    if (playtime == _temp.playtime)
-                        _coplay[index].currentgame = 1;
-                }
-
-                _coplay[index].playtime = playtime;
-                index++;
+                Coplay[i].GameId = gameIds[i];
             }
-
-            index = 0;
-            foreach (var gameid in Decrypt.GetUints(hex, "gameid"))
-            {
-                if (index > count)
-                    break;
-
-                _coplay[index].gameid = gameid;
-                index++;
-            }
-            return steamids;
         }
 
+        public static List<uint> GetUints(string input, string field) =>
+            ExtractHexValues(input, field, 4)
+                .Select(hex => HexToUint(hex, true))
+                .ToList();
 
-        public static List<UInt32> GetUints(string input, string field = "Playtime", bool useFilePath = false)
+        public static List<ulong> GetUlongs(string input, string field) =>
+            ExtractHexValues(input, field, 8)
+                .Select(hex => HexToUlong(hex, true))
+                .ToList();
+
+        private static List<string> ExtractHexValues(string hex, string searchString, int byteSize)
         {
-            List<string> tempList = new List<string>();
-
-            if (useFilePath)
-                tempList = FindStringInHex(ReadFileAsHex(input), field, 4);
-            else
-                tempList = FindStringInHex(input, field, 4);
-
-            List<UInt32> dataOut = new List<UInt32>();
-
-            foreach (var item in tempList)
-                dataOut.Add(HexToUint(item, true));
-
-            return dataOut;
-        }
-
-        public static List<ulong> GetUlongs(string input, string field = "SteamID", bool useFilePath = false)
-        {
-            List<string> tempList = new List<string>();
-
-            if (useFilePath)
-                tempList = FindStringInHex(ReadFileAsHex(input), field, 8);
-            else
-                tempList = FindStringInHex(input, field, 8);
-
-            List<ulong> dataOut = new List<ulong>();
-
-            foreach (var item in tempList)
-                dataOut.Add(HexToUlong(item, true));
-
-            return dataOut;
-        }
-
-        public static List<string> FindStringInHex(string input, string searchString, int bytesToRead)
-        {
-            List<string> endResultHex = new List<string>();
+            var results = new List<string>();
             try
             {
-                //List<ulong> endResult = new List<ulong>();
-                searchString = StringToHex(searchString);
-                int searchStringLength = searchString.Length;
-                int indexOfSearchString = input.IndexOf(searchString);
-                while (indexOfSearchString != -1)
+                string searchHex = StringToHex(searchString);
+                int index = hex.IndexOf(searchHex, StringComparison.Ordinal);
+                while (index != -1)
                 {
-                    string outputHex = input.Substring(indexOfSearchString + searchStringLength + 2, bytesToRead * 2);
-                    //Console.WriteLine(Utils.Utils.HexToUlong(outputHex, true));
-                    //endResult.Add(Utils.Utils.HexToUlong(outputHex, true));
-
-                    //Console.WriteLine(outputHex);
-                    endResultHex.Add(outputHex);
-                    indexOfSearchString = input.IndexOf(searchString, indexOfSearchString + searchStringLength + 2 + bytesToRead * 2);
+                    int valueStart = index + searchHex.Length + 2;
+                    results.Add(hex.Substring(valueStart, byteSize * 2));
+                    index = hex.IndexOf(searchHex, valueStart + byteSize * 2, StringComparison.Ordinal);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception at FindStringInHex() - {ex}");
+                Console.WriteLine($"Error in ExtractHexValues: {ex.Message}");
             }
-
-            return endResultHex;
+            return results;
         }
 
         public static string ReadFileAsHex(string filePath)
         {
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
-            {
-                using (BinaryReader binaryReader = new BinaryReader(fileStream))
-                {
-                    byte[] fileBytes = binaryReader.ReadBytes((int)fileStream.Length);
-
-                    return BitConverter.ToString(fileBytes).Replace("-", "");
-                }
-            }
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using var binaryReader = new BinaryReader(fileStream);
+            byte[] fileBytes = binaryReader.ReadBytes((int)fileStream.Length);
+            return ByteArrayToHexString(fileBytes);
         }
 
-        public static string SplitInParts(string input, uint length)
+        public static string ByteArrayToHexString(byte[] bytes) =>
+            string.Concat(bytes.Select(b => b.ToString("X2")));
+
+        public static string StringToHex(string input) =>
+            string.Concat(Encoding.Default.GetBytes(input).Select(b => b.ToString("X2")));
+
+        public static ulong HexToUlong(string hex, bool reverseEndianness = false)
         {
-            string output = "";
-            for (int i = 0; i < input.Length; i++)
-            {
-                output += input[i];
-                if (i % length == 1)
-                {
-                    output += " ";
-                }
-            }
-            return output;
+            ulong value = Convert.ToUInt64(hex, 16);
+            return reverseEndianness ? ReverseEndianness(value) : value;
         }
 
-        public static string ByteArrayToHexString(byte[] Bytes)
+        public static uint HexToUint(string hex, bool reverseEndianness = false)
         {
-            StringBuilder Result = new StringBuilder(Bytes.Length * 2);
-            string HexAlphabet = "0123456789ABCDEF";
-
-            foreach (byte B in Bytes)
-            {
-                Result.Append(HexAlphabet[(int)(B >> 4)]);
-                Result.Append(HexAlphabet[(int)(B & 0xF)]);
-            }
-
-            return Result.ToString();
+            uint value = Convert.ToUInt32(hex, 16);
+            return reverseEndianness ? ReverseEndianness(value) : value;
         }
 
+        private static ulong ReverseEndianness(ulong value) =>
+            BinaryPrimitives.ReverseEndianness(value);
 
-        public static string StringToHex(string input, bool splitBytes = false)
-        {
-            byte[] bytes = Encoding.Default.GetBytes(input);
-
-            string hexString = ByteArrayToHexString(bytes);
-
-            if (splitBytes)
-            {
-                return SplitInParts(hexString, 2);
-            }
-
-            return hexString;
-        }
-
-        public static ulong HexToUlong(string input, bool reverseEndianness = false)
-        {
-            ulong output = Convert.ToUInt64(input, 16);
-            if (reverseEndianness)
-            {
-                return BinaryPrimitives.ReverseEndianness(output);
-            }
-
-            return output;
-        }
-
-        public static uint HexToUint(string input, bool reverseEndianness = false)
-        {
-            uint output = Convert.ToUInt32(input, 16);
-            if (reverseEndianness)
-            {
-                return BinaryPrimitives.ReverseEndianness(output);
-            }
-
-            return output;
-        }
+        private static uint ReverseEndianness(uint value) =>
+            BinaryPrimitives.ReverseEndianness(value);
     }
 }

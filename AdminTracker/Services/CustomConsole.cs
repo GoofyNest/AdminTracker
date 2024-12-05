@@ -1,15 +1,16 @@
 ﻿using System;
 
-namespace AdminTracker
+public static class Custom
 {
-    public static class Custom
+    private static readonly object _lockObj = new object();
+
+    public static void WriteLine(string message, ConsoleColor color = ConsoleColor.White)
     {
-        public static void WriteLine(string message, ConsoleColor color = ConsoleColor.White)
+        lock (_lockObj) // Ensure that only one thread can write to the console at a time
         {
             var prefix = "";
             switch (color)
             {
-                case ConsoleColor.Yellow:
                 case ConsoleColor.DarkYellow:
                     prefix = "[WARN] ";
                     break;
@@ -28,17 +29,19 @@ namespace AdminTracker
                     prefix = "[NOTIFY] ";
                     break;
 
+                case ConsoleColor.Yellow:
+                    prefix = "[CHEATER] ";
+                    break;
+
                 case ConsoleColor.Blue:
                 case ConsoleColor.DarkBlue:
                     prefix = "[INFO] ";
                     break;
 
-            }
-
-            if (string.IsNullOrWhiteSpace(prefix))
-            {
-                prefix = "[NORMAL] ";
-                color = ConsoleColor.Green;
+                default:
+                    prefix = "[NORMAL] ";
+                    color = ConsoleColor.Green;
+                    break;
             }
 
             Console.ForegroundColor = color;
@@ -49,8 +52,9 @@ namespace AdminTracker
             Console.Write($"[{DateTime.Now:HH:mm:ss}] ");
             Console.ResetColor();
 
-            Console.WriteLine($"{message}");
+            Console.ForegroundColor = ConsoleColor.White;
 
+            Console.WriteLine($"{message}");
         }
     }
 }

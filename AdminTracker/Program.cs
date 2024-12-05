@@ -1,4 +1,5 @@
 ﻿using AdminTracker.Classes;
+using AdminTracker.Functions.Threads;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,6 +19,7 @@ namespace AdminTracker
         public static Root adminRoot = new Root();
         public static List<Administrators> _admins = new List<Administrators>();
         public static List<AdminCache> _adminCache = new List<AdminCache>();
+        public static List<Profile> _profiles = new List<Profile>();
 
         public static Config _config = new Config();
 
@@ -56,6 +58,7 @@ namespace AdminTracker
 
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.Title = "AdminTracker | Bomb Facepunch";
 
             try
@@ -93,6 +96,9 @@ namespace AdminTracker
                 return;
             }
 
+            if(_config.profileCrawler)
+                ProfileCrawler.Initialize(_profiles);
+
             new Thread(ResetThread).Start();
             
             while(true)
@@ -122,10 +128,12 @@ namespace AdminTracker
                 }
 
                 AdminCheck(Rust.PlayerList());
+
+
             }
         }
 
-        private static void AdminCheck(List<Decrypt> players)
+        private static async void AdminCheck(List<Decrypt> players)
         {
             if (players == null)
                 return;
@@ -133,59 +141,54 @@ namespace AdminTracker
             if (players.Count <= 0)
                 return;
 
+            var profileUrls = new List<string>();
+
             Custom.WriteLine($"PlayerList count {players.Count}", ConsoleColor.DarkMagenta);
 
-            foreach(var player in players)
+            for(var i = 0; i<players.Count; i++)
             {
-                var adminIndex = _admins.FindIndex(m => m.steamID == player.steamid);
+                var player = players[i];
 
-                if (adminIndex > -1)
+                profileUrls.Add($"https://steamcommunity.com/profiles/{player.SteamId}?xml=1");
+
+                //Console.WriteLine(player);
+
+                var adminIndex = _admins.FindIndex(m => m.steamID == player.SteamId);
+
+                // No admins found
+                if (adminIndex == -1)
+                    continue;
+
+                var _admin = _admins[adminIndex];
+
+                if (player.Playtime > 0 && _config.useAdminCache)
                 {
-                    var _admin = _admins[adminIndex];
+                    var adminCacheIndex = _adminCache.FindIndex(m => m.steamID == _admin.steamID);
 
-                    //var antiSpamIndex = _spam.FindIndex(m => m.id == player.steamid);
-
-                    if(player.playtime > 0 && _config.useAdminCache)
+                    if (adminCacheIndex > -1)
                     {
-                        var adminCacheIndex = _adminCache.FindIndex(m => m.steamID == _admin.steamID);
+                        var _adminFromCache = _adminCache[adminCacheIndex];
 
-                        if(adminCacheIndex > -1)
+                        var lastSeen = _adminFromCache.lastSeen;
+
+                        if (lastSeen != player.Playtime)
                         {
-                            var _adminFromCache = _adminCache[adminCacheIndex];
-
-                            var lastSeen = _adminFromCache.lastSeen;
-
-                            if(lastSeen != player.playtime)
-                            {
-                                using (SpeechSynthesizer synth = new SpeechSynthesizer())
-                                {
-                                    synth.SetOutputToDefaultAudioDevice();
-
-                                    Custom.WriteLine($"Admin re-connected: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
-                                    synth.Speak($"Admin re-connected: {_admin.staticName}");
-                                }
-
-                                _adminFromCache.lastSeen = player.playtime;
-                            }
-                        }
-                        else
-                        {
-                            _adminCache.Add(new AdminCache() { steamID = player.steamid, lastSeen = player.playtime });
-
-                            Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
-
-                            // Initialize a new instance of the SpeechSynthesizer.
                             using (SpeechSynthesizer synth = new SpeechSynthesizer())
                             {
                                 synth.SetOutputToDefaultAudioDevice();
 
-                                synth.Speak($"Admin found: {_admin.staticName}");
+                                Custom.WriteLine($"Admin re-connected: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.Playtime}", ConsoleColor.DarkYellow);
+                                synth.Speak($"Admin re-connected: {_admin.staticName}");
                             }
+
+                            _adminFromCache.lastSeen = player.Playtime;
                         }
                     }
                     else
                     {
-                        Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.playtime}", ConsoleColor.DarkYellow);
+                        _adminCache.Add(new AdminCache() { steamID = player.SteamId, lastSeen = player.Playtime });
+
+                        Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.Playtime}", ConsoleColor.DarkYellow);
 
                         // Initialize a new instance of the SpeechSynthesizer.
                         using (SpeechSynthesizer synth = new SpeechSynthesizer())
@@ -196,6 +199,27 @@ namespace AdminTracker
                         }
                     }
                 }
+                else
+                {
+                    Custom.WriteLine($"Admin found: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID}, {player.Playtime}", ConsoleColor.DarkYellow);
+
+                    // Initialize a new instance of the SpeechSynthesizer.
+                    using (SpeechSynthesizer synth = new SpeechSynthesizer())
+                    {
+                        synth.SetOutputToDefaultAudioDevice();
+
+                        synth.Speak($"Admin found: {_admin.staticName}");
+                    }
+                }
+            }
+
+            // Use Task.Run to start the FetchMultipleWithConcurrencyAsync method asynchronously
+            if (_config.profileCrawler)
+            {
+                await Task.Run(async () =>
+                {
+                    await ProfileCrawler.FetchMultipleWithConcurrencyAsync(profileUrls, 5);
+                });
             }
         }
 

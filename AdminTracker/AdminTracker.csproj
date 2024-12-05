@@ -9,6 +9,7 @@
     <RootNamespace>AdminTracker</RootNamespace>
     <AssemblyName>AdminTracker</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>8.0</LangVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
@@ -64,10 +65,13 @@
     <Compile Include="Classes\Administrators.cs" />
     <Compile Include="Classes\Config.cs" />
     <Compile Include="Classes\Overlay.cs" />
-    <Compile Include="Classes\Players.cs" />
+    <Compile Include="Classes\Profile.cs" />
     <Compile Include="Classes\Steam.cs" />
+    <Compile Include="Functions\CDataJsonConverter.cs" />
     <Compile Include="Functions\Decrypt.cs" />
+    <Compile Include="Functions\MostPlayedGameConverter.cs" />
     <Compile Include="Functions\Rust.cs" />
+    <Compile Include="Functions\Threads\ProfileCrawler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CustomConsole.cs" />
