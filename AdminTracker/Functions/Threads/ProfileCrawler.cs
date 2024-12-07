@@ -43,7 +43,7 @@ namespace AdminTracker.Functions.Threads
                         {
                             profiles.Add(profile); // Add the profile to the list
 
-                            //WarnForCheater(profile);
+                            WarnForCheater(profile);
                         }
                     }
 

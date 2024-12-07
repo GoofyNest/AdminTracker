@@ -13,6 +13,7 @@ namespace AdminTracker
         public string adminPath { get; set; }
 
         public bool useAdminCache { get; set; } = true;
+        public bool useNewAdminTracker { get; set; } = true;
 
         public bool profileCrawler { get; set; } = false;
 

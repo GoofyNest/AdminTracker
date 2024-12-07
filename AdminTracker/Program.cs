@@ -1,14 +1,12 @@
-﻿using AdminTracker.Classes;
-using AdminTracker.Functions.Threads;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
+using System.IO;
 using System.Speech.Synthesis;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AdminTracker.Classes;
+using AdminTracker.Functions.Threads;
 
 namespace AdminTracker
 {
@@ -144,6 +142,7 @@ namespace AdminTracker
             var profileUrls = new List<string>();
 
             Custom.WriteLine($"PlayerList count {players.Count}", ConsoleColor.DarkMagenta);
+            Custom.WriteLine($"AdminList count {_admins.Count}", ConsoleColor.DarkMagenta);
 
             for(var i = 0; i<players.Count; i++)
             {
@@ -211,6 +210,15 @@ namespace AdminTracker
                         synth.Speak($"Admin found: {_admin.staticName}");
                     }
                 }
+            }
+
+            // New admin tracker version
+            if(File.Exists("exported-cookies.json") && _config.useNewAdminTracker)
+            {
+                await Task.Run(async () =>
+                {
+                    await RecentPlayedWith.FindAdminsV2();
+                });
             }
 
             // Use Task.Run to start the FetchMultipleWithConcurrencyAsync method asynchronously

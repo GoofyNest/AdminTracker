@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack, Version=1.11.71.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\packages\HtmlAgilityPack.1.11.71\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -64,6 +67,7 @@
     <Compile Include="Classes\AdminCache.cs" />
     <Compile Include="Classes\Administrators.cs" />
     <Compile Include="Classes\Config.cs" />
+    <Compile Include="Classes\CookieItem.cs" />
     <Compile Include="Classes\Overlay.cs" />
     <Compile Include="Classes\Profile.cs" />
     <Compile Include="Classes\Steam.cs" />
@@ -72,6 +76,7 @@
     <Compile Include="Functions\MostPlayedGameConverter.cs" />
     <Compile Include="Functions\Rust.cs" />
     <Compile Include="Functions\Threads\ProfileCrawler.cs" />
+    <Compile Include="Functions\Threads\RecentPlayedWith.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CustomConsole.cs" />
