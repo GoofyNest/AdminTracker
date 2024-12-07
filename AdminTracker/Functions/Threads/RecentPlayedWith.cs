@@ -151,7 +151,7 @@ namespace AdminTracker.Functions.Threads
             }
             else
             {
-                Console.WriteLine("No coplayGroup div found in the HTML.");
+                Custom.WriteLine("No coplayGroup div found in the HTML.", ConsoleColor.DarkMagenta);
             }
         }
     }
