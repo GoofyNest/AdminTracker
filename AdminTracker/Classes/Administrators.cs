@@ -98,7 +98,7 @@ namespace AdminTracker
                 {
                     Administrators tempAdmin = new Administrators();
 
-                    tempAdmin.steamID = admin.steamid;
+                    tempAdmin.steamID = admin.steamid.Trim();
                     tempAdmin.steamName = admin.personaname;
                     tempAdmin.staticName = admin.personaname;
 

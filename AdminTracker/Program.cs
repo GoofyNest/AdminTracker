@@ -141,7 +141,7 @@ namespace AdminTracker
 
             var profileUrls = new List<string>();
 
-            Custom.WriteLine($"PlayerList count {players.Count}", ConsoleColor.DarkMagenta);
+            Custom.WriteLine($"PlayerList v1 count {players.Count}", ConsoleColor.DarkMagenta);
             Custom.WriteLine($"AdminList count {_admins.Count}", ConsoleColor.DarkMagenta);
 
             for(var i = 0; i<players.Count; i++)

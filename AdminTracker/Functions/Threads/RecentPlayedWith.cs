@@ -129,7 +129,7 @@ namespace AdminTracker.Functions.Threads
                 // Loop through all matches and print the Steam IDs
                 foreach (Match match in matches)
                 {
-                    string steamID = match.Groups[1].Value;
+                    string steamID = match.Groups[1].Value.Trim();
 
                     var adminIndex = Program._admins.FindIndex(m => m.steamID == steamID);
 

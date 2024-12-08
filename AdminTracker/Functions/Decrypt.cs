@@ -41,7 +41,7 @@ namespace AdminTracker
 
             return uniqueIds.Select(id => new Decrypt
             {
-                SteamId = id.ToString(),
+                SteamId = id.ToString().Trim(),
                 CurrentGame = (!string.IsNullOrEmpty(targetSteamId) && accuracy != "3" && id.ToString() == targetSteamId) ? 1 : 0
             }).ToList();
         }

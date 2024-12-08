@@ -25,34 +25,28 @@ namespace AdminTracker.Functions.Threads
             var _cfg = Program._config;
             try
             {
-                // Check if the cache directory exists
-                if (Directory.Exists(CacheDirectory))
-                {
-                    // Get all XML files from the cache directory
-                    string[] xmlFiles = Directory.GetFiles(CacheDirectory, "*.xml");
+                Directory.CreateDirectory(CacheDirectory);
 
-                    // Loop through each file and load it into the profiles list
-                    foreach (var filePath in xmlFiles)
+                // Get all XML files from the cache directory
+                string[] xmlFiles = Directory.GetFiles(CacheDirectory, "*.xml");
+
+                // Loop through each file and load it into the profiles list
+                foreach (var filePath in xmlFiles)
+                {
+                    string steamId64 = Path.GetFileNameWithoutExtension(filePath);
+
+                    // Convert the XML content to a Profile object
+                    Profile profile = ConvertXmlToProfile(filePath);
+
+                    if (profile != null)
                     {
-                        string steamId64 = Path.GetFileNameWithoutExtension(filePath);
+                        profiles.Add(profile); // Add the profile to the list
 
-                        // Convert the XML content to a Profile object
-                        Profile profile = ConvertXmlToProfile(filePath);
-
-                        if (profile != null)
-                        {
-                            profiles.Add(profile); // Add the profile to the list
-
-                            WarnForCheater(profile);
-                        }
+                        WarnForCheater(profile);
                     }
+                }
 
-                    File.WriteAllText(Path.Combine("config", "profiles.json"), JsonConvert.SerializeObject(profiles, Newtonsoft.Json.Formatting.Indented));
-                }
-                else
-                {
-                    Custom.WriteLine("Cache directory not found. No profiles were loaded.", ConsoleColor.DarkMagenta);
-                }
+                File.WriteAllText(Path.Combine("config", "profiles.json"), JsonConvert.SerializeObject(profiles, Newtonsoft.Json.Formatting.Indented));
             }
             catch (Exception ex)
             {
