@@ -28,5 +28,11 @@
 - Servers with population below 100
 - When server have more than 100 players, admin message might be delayed up to 5 minutes, still gives you a indication if you got manually banned
 
+## 2024 December update
+- Install this browser extension: https://webextension.org/listing/cookie-editor.html
+- Login on your steam account on Web
+- Export the cookie file and place it in the same folder as AdminTracker.exe
+- Enable useNewAdminTracker in config.json
+
 ## My discord
 `theminkman__`
