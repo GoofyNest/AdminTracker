@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
-using System.Numerics;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -33,7 +34,7 @@ namespace AdminTracker.Functions.Threads
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
                     // Make the request to the Steam Coplay page
-                    var response = await client.GetAsync("https://steamcommunity.com/profiles/"+ Program.playerID + "/friends/coplay");
+                    var response = await client.GetAsync("https://steamcommunity.com/profiles/" + Program.playerID + "/friends/coplay");
 
                     // Check if the request was successful
                     if (response.IsSuccessStatusCode)
@@ -104,6 +105,12 @@ namespace AdminTracker.Functions.Threads
 
         static void ParseSteamIDs(string htmlContent)
         {
+            // Reset temporary HashSet for this invocation
+            var processedSteamIDs = new HashSet<string>();
+
+            // Current timestamp
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
             // Load the HTML content using HtmlAgilityPack
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlContent);
@@ -122,20 +129,43 @@ namespace AdminTracker.Functions.Threads
                 // Use Regex to find all Steam IDs in the inner HTML
                 var matches = Regex.Matches(coplayGroupHtml, pattern);
 
-                //Console.WriteLine("Steam IDs found:");
-
                 Custom.WriteLine($"PlayerList v2 count {matches.Count}", ConsoleColor.DarkMagenta);
 
-                // Loop through all matches and print the Steam IDs
+                // Loop through all matches and process the Steam IDs
                 foreach (Match match in matches)
                 {
                     string steamID = match.Groups[1].Value.Trim();
 
+                    // Skip if this Steam ID has already been processed
+                    if (processedSteamIDs.Contains(steamID))
+                        continue;
+
+                    processedSteamIDs.Add(steamID);
+
                     var adminIndex = Program._admins.FindIndex(m => m.steamID == steamID);
 
-                    if(adminIndex > -1)
+                    if (adminIndex > -1)
                     {
                         var _admin = Program._admins[adminIndex];
+
+                        // Check for delay using AdminCache
+                        var adminCache = Program._adminCache2.FirstOrDefault(c => c.steamID == steamID);
+                        if (adminCache != null && currentTime - adminCache.lastSeen < 15 * 60)
+                        {
+                            // Skip if the 15-minute delay hasn't passed
+                            Custom.WriteLine($"Admin: [{_admin.staticName}], ({_admin.steamName}), {_admin.steamID} (Skipped voice prompt due to spamFix)", ConsoleColor.DarkYellow);
+                            continue;
+                        }
+
+                        // Update or add the admin to the cache
+                        if (adminCache == null)
+                        {
+                            Program._adminCache2.Add(new AdminCache { steamID = steamID, lastSeen = currentTime });
+                        }
+                        else
+                        {
+                            adminCache.lastSeen = currentTime;
+                        }
 
                         using (SpeechSynthesizer synth = new SpeechSynthesizer())
                         {
@@ -145,8 +175,6 @@ namespace AdminTracker.Functions.Threads
                             synth.Speak($"Admin found: {_admin.staticName}");
                         }
                     }
-
-                    //Console.WriteLine(steamID);
                 }
             }
             else

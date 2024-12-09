@@ -17,6 +17,7 @@ namespace AdminTracker
         public static Root adminRoot = new Root();
         public static List<Administrators> _admins = new List<Administrators>();
         public static List<AdminCache> _adminCache = new List<AdminCache>();
+        public static List<AdminCache> _adminCache2 = new List<AdminCache>();
         public static List<Profile> _profiles = new List<Profile>();
 
         public static Config _config = new Config();
@@ -30,7 +31,6 @@ namespace AdminTracker
         public static string playerName = "";
 
         public static long lastWriteTime = 0;
-
 
         private static void ConsolePoolThread()
         {
